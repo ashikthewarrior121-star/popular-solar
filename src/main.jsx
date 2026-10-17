@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { FileUp, Download, ShieldCheck, CheckCircle2, FileText, Sun, RefreshCw, AlertCircle } from 'lucide-react';
 import './style.css';
 
+// Set VITE_API_BASE_URL in Netlify to your deployed Render service URL.
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
+
 function App() {
   const [pdf, setPdf] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -18,8 +21,8 @@ function App() {
     const timer = setInterval(() => setElapsedSeconds(seconds => seconds + 1), 1000);
     try {
       // Verify the built-in letterhead backend is running, rather than an older server.
-      const healthResponse = await fetch('/api/health');
-      if (!healthResponse.ok) throw new Error('Letterhead server is not responding. Stop old servers and restart this project.');
+      const healthResponse = await fetch(`${API_BASE_URL}/api/health`);
+      if (!healthResponse.ok) throw new Error('Backend is not responding. Check VITE_API_BASE_URL in Netlify and confirm the Render service is running.');
       const health = await healthResponse.json();
       if (health.appVersion !== 'separate-header-footer-v8' || health.pdfOnlyUpload !== true) {
         throw new Error('An older backend is still running. Stop the old Node.js server, then restart this project from the extracted updated folder.');
@@ -31,7 +34,7 @@ function App() {
         throw new Error(`${missing.join('; ')}. Replace the placeholder files with your actual cropped images, then restart the app.`);
       }
       const form = new FormData(); form.append('pdf', pdf);
-      const response = await fetch('/api/replace', { method: 'POST', body: form });
+      const response = await fetch(`${API_BASE_URL}/api/replace`, { method: 'POST', body: form });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.details ? `${data.error || 'PDF processing failed.'} Details: ${data.details}` : (data.error || 'PDF processing failed.'));

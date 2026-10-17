@@ -1,25 +1,27 @@
-# PDF Letterhead Studio — processing diagnostics v8
+# PDF Letterhead Studio — Render + Netlify connection (v9)
 
-This version improves the generic PDF processing error by returning the actual backend failure message and validates header/footer files before processing.
+This version connects the React frontend to a separately deployed Express backend using `VITE_API_BASE_URL`.
 
-- Accepts genuine PNG or JPG bytes even if a JPG file was accidentally named `.png`.
-- Detects missing/empty placeholder images and explains which file needs replacing.
-- Keeps the page-copy approach for preserving every source PDF page.
-- Keeps proportional header/footer sizing and the elapsed-seconds indicator.
+## Render backend settings
+The `package.json` is in the project root, not inside `server/`. In Render, set **Root Directory** to blank (or `.`), not `server/`.
 
-## Required files
-Replace the empty placeholder images with your actual cropped images:
-- `public/header.png`
-- `public/footer.png`
+- Build Command: `npm install`
+- Start Command: `npm start`
 
-JPG files are also accepted by content detection, but keep these filenames unless you also update the paths in `server/index.js`.
+Add Render environment variable:
+- `FRONTEND_URL` = your actual Netlify site URL, e.g. `https://your-site-name.netlify.app`
 
-## Run
-Stop old servers with Ctrl+C, extract to a new folder, open it in VS Code and run:
+The backend listens on `process.env.PORT` and exposes `/api/health` and `/api/replace`.
 
-```powershell
-npm.cmd install
-npm.cmd run dev
-```
+## Netlify frontend settings
+In Netlify → Site configuration → Environment variables, add:
+- Key: `VITE_API_BASE_URL`
+- Value: your actual Render service URL, e.g. `https://your-service-name.onrender.com`
 
-Then refresh `http://localhost:5173` with Ctrl+F5. If processing fails, the app will now show the actual error rather than only a generic message.
+Do not include `/api` at the end. Example format only; replace it with the real Render URL. Then trigger a new deploy so Vite embeds the variable.
+
+## Local development
+Keep `VITE_API_BASE_URL` empty in `.env` (or omit it) and run `npm.cmd install`, then `npm.cmd run dev`. Vite proxies `/api` to `http://localhost:4000`.
+
+## Letterhead images
+Replace `public/header.png` and `public/footer.png` with your actual cropped images. Do not upload empty placeholder files.

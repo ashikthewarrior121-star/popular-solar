@@ -9,7 +9,19 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const HEADER_PATH = path.join(__dirname, '..', 'public', 'header.png');
 const FOOTER_PATH = path.join(__dirname, '..', 'public', 'footer.png');
-app.use(cors());
+const allowedOrigins = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser tools and local development; restrict deployed browser requests if configured.
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin.replace(/\/$/, '')) || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS blocked this origin. Add your Netlify site URL to FRONTEND_URL on Render.'));
+  }
+}));
 app.use(express.json({ limit: '1mb' }));
 
 const upload = multer({
